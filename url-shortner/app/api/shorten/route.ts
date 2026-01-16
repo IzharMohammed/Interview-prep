@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { isValidUrl } from "@/lib/utils";
+import { generateShortCode, isValidUrl } from "@/lib/utils";
+import redis from "@/lib/redis";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -9,13 +10,12 @@ export async function POST(req: NextRequest) {
         const { url } = await req.json();
 
         // Validation
-        if (!url || isValidUrl(url)) {
+        if (!url) {
             return NextResponse.json(
                 { error: "Invalid URL provided" },
                 { status: 400 }
             )
         }
-
 
         // shorten the code 
         const shortCode = generateShortCode();
@@ -25,12 +25,18 @@ export async function POST(req: NextRequest) {
             data: { shortCode, originalUrl: url, }
         })
 
-        await redis
+        await redis.setex(`url:${shortCode}`, 86400, url);
 
         return Response.json({
-            shortCode: "qwertyui"
+            shortCode,
+            shortUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/${shortCode}`,
+            originalUrl: url
         })
     } catch (error) {
-
+        console.error("Error shortening url", error)
+        return NextResponse.json(
+            { error: "Internal server error" },
+            { status: 500 }
+        )
     }
 }
