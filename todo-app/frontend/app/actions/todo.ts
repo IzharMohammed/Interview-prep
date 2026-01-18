@@ -63,6 +63,7 @@ export async function updateTodo(
             {
                 method: "PATCH",
                 headers: {
+                    "Content-Type":"application/json"
                 },
                 body: JSON.stringify({ title, description, priority })
             }

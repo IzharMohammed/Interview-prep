@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { createTodo, deleteTodo, getTodos } from "./actions/todo";
+import { createTodo, deleteTodo, getTodos, updateTodo } from "./actions/todo";
 interface Todo {
   id: string;
   title: string;
@@ -16,6 +16,8 @@ export default function Home() {
   const [priority, setPriority] = useState("medium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const fetchTodos = async () => {
     const res = await getTodos();
     setTodos(res.result);
@@ -26,7 +28,12 @@ export default function Home() {
 
   const handleCreate = async () => {
     setLoading(true);
-    await createTodo({ title, description, priority });
+    if (editingId) {
+      await updateTodo({ id: editingId, title, description, priority });
+      setEditingId(null);
+    } else {
+      await createTodo({ title, description, priority });
+    }
     fetchTodos();
     setTitle("");
     setDescription("");
@@ -39,20 +46,34 @@ export default function Home() {
     fetchTodos();
   };
 
+  const handleEdit = (todo: Todo) => {
+    setEditingId(todo.id);
+    setTitle(todo.title);
+    setDescription(todo.description || "");
+    setPriority(todo.priority);
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setTitle("");
+    setDescription("");
+    setPriority("medium");
+  };
+
   return (
     <div>
       <div>Todo App</div>
       <input
         onChange={(e) => setTitle(e.target.value)}
         value={title}
-        onKeyPress={(e) => e.key === "Enter" && handleCreate}
+        onKeyPress={(e) => e.key === "Enter" && handleCreate()}
         type="text"
         placeholder="What needs to be done?"
       />
       <input
         onChange={(e) => setDescription(e.target.value)}
         value={description}
-        onKeyPress={(e) => e.key === "Enter" && handleCreate}
+        onKeyPress={(e) => e.key === "Enter" && handleCreate()}
         type="text"
         placeholder="Description (optional)"
       />
@@ -62,18 +83,29 @@ export default function Home() {
         <option value="high">High</option>
       </select>
       <button disabled={loading} onClick={handleCreate}>
-        {loading ? "Adding Todo..." : "Add Todo"}
+        {loading
+          ? editingId
+            ? "Updating..."
+            : "Adding Todo..."
+          : editingId
+            ? "Update Todo"
+            : "Add Todo"}
       </button>
+      {editingId && (
+        <button onClick={handleCancel} className="ml-2">
+          Cancel
+        </button>
+      )}
       <div>
         {todos &&
           todos.map((todo) => (
-            <div>
+            <div key={todo.id}>
               <div>{todo.title}</div>
               <div>{todo.description}</div>
               <div>{todo.priority}</div>
               <div>{todo.completed}</div>
               <div className="flex gap-4">
-                <button>Edit</button>
+                <button onClick={() => handleEdit(todo)}>Edit</button>
                 <button onClick={() => handleDelete(todo.id)}>Delete</button>
               </div>
               <br />

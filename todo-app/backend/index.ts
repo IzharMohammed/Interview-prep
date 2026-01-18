@@ -32,7 +32,9 @@ app.post("/api/todo", async (req, res) => {
 
 app.patch("/api/todo/:id", async (req, res) => {
     const { id } = req.params
+    console.log("=====", req.body);
     const { title, completed, description, priority } = req.body as Prisma.TodoCreateInput
+
     try {
         const todo = await prisma.todo.update({
             where: { id },
