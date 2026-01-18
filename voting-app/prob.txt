@@ -1,0 +1,19 @@
+ 
+Voting App
+Goal
+Build a mini full-stack app where users can vote for their favorite team and see live vote counts.
+Requirements
+Frontend (React/Next + MUI)
+- Show 3 teams (A,B,C).
+- Each team has a Vote button.
+- When clicked, the vote count updates (UI + database).
+- Display the current vote counts for each team.
+Bonus: Highlight the emoji with the most votes.
+Backend (Node + Express/Nest)
+- Create a REST API with two endpoints:
+- GET /api/votes → returns all emojis with their counts.
+- POST /api/vote 
+body: {team: 'A'}
+→ increments the vote count for the given team.
+Database (SQL/NoSQL)
+ 
