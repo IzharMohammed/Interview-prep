@@ -1,4 +1,5 @@
-const BACKEND_URL = process.env.BACKEND_URL;
+const BACKEND_URL = "http://localhost:4000";
+
 export async function createTodo(
     { title, description, priority }:
         { title: string, description: string, priority: string }) {
@@ -88,6 +89,9 @@ export async function deleteTodo(id: string
 ) {
     try {
         const response = await fetch(`${BACKEND_URL}/api/todo/${id}`,
+            {
+                method: "DELETE"
+            }
         )
 
         if (!response.ok) {

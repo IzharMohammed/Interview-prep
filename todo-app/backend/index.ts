@@ -11,7 +11,7 @@ const PORT = 4000;
 app.get("/api/todos", async (req, res) => {
     try {
         const result = await prisma.todo.findMany({ orderBy: { createdAt: "desc" } })
-        return res.status(200).json({ todos: result })
+        return res.status(200).json(result)
     } catch (error) {
         console.error("Error getting todos");
         return res.status(500).json({ error: "Failed to get todos" })
@@ -53,6 +53,8 @@ app.patch("/api/todo/:id", async (req, res) => {
 
 app.delete("/api/todo/:id", async (req, res) => {
     const { id } = req.params;
+    console.log("id", id);
+
     try {
         const todo = await prisma.todo.delete({ where: { id } })
         return res.status(200).json({ message: `${todo.title} removed successfully` })
