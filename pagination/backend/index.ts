@@ -11,9 +11,10 @@ app.get("/api/products", async (req, res) => {
     try {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
-        console.log("page", page);
+        const search = req.query.search as string || ""
+        console.log("Api call");
 
-        if (page < 1 || limit < 1 || limit > 100) {
+        if (page < 1 || limit < 1 || limit > 50) {
             return res.status(400).json({
                 error: "Invalid pagination parameters"
             })
@@ -21,7 +22,17 @@ app.get("/api/products", async (req, res) => {
 
         const skip = (page - 1) * limit;
 
-        const products = await prisma.product.findMany({ skip, take: limit, orderBy: { createdAt: "asc" } });
+        const products = await prisma.product.findMany({
+            where: {
+                ...(search && {
+                    OR: [
+                        { name: { contains: search, mode: "insensitive" } },
+                        { description: { contains: search, mode: "insensitive" } }
+                    ]
+                })
+            },
+            skip, take: limit, orderBy: { createdAt: "asc" }
+        });
 
         return res.status(200).json(products)
     } catch (error) {

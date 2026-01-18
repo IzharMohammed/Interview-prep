@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getProducts } from "./actions/product";
+import { getProducts } from "../actions/product";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Product {
   id: string;
@@ -14,18 +15,24 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState("1");
   const [limit, setLimit] = useState("10");
-
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 600);
   const fetchProducts = async () => {
-    const result = await getProducts({ page, limit });
+    const result = await getProducts({ page, limit, search: debouncedSearch });
     setProducts(result.result);
   };
   useEffect(() => {
     fetchProducts();
-  }, [page, limit]);
+  }, [page, limit, debouncedSearch]);
 
   return (
     <div>
       <div> Pagination products</div>
+      <input
+        onChange={(e) => setSearch(e.target.value)}
+        value={search}
+        type="text"
+      />
       <div>
         {products.map((p) => (
           <div key={p.id} className="flex gap-15">

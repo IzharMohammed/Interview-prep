@@ -1,8 +1,9 @@
 const BACKEND_URL = "http://localhost:4000";
 
-export async function getProducts({ page, limit }: { page: string, limit: string }) {
+export async function getProducts({ page, limit, search }: { page: string, limit: string, search: string }) {
+
     try {
-        const params = { page, limit }
+        const params = { page, limit, search }
         const url = `${BACKEND_URL}/api/products?` + new URLSearchParams(params);
         const response = await fetch(url,
             {
