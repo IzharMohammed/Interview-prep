@@ -6,6 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(cors())
 const PORT = 4000;
+
 app.get("/api/votes", async (req, res) => {
   try {
     const response = await prisma.team.findMany({ orderBy: { voteCount: "desc" } });

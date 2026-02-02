@@ -46,7 +46,7 @@ export default function Home() {
         {/* Vote Display */}
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {teams.map((t) => (
-            // ✅ Add unique key
+            //  Add unique key
             <div key={t.name} className="bg-white rounded-lg shadow-lg p-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold mb-2">Team {t.name}</h2>

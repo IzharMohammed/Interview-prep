@@ -15,7 +15,6 @@ export default function Home() {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const fetchTodos = async () => {

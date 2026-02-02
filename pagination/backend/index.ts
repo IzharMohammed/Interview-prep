@@ -12,7 +12,6 @@ app.get("/api/products", async (req, res) => {
         const page = parseInt(req.query.page as string) || 1;
         const limit = parseInt(req.query.limit as string) || 10;
         const search = req.query.search as string || ""
-        console.log("Api call");
 
         if (page < 1 || limit < 1 || limit > 50) {
             return res.status(400).json({

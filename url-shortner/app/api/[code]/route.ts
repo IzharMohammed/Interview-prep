@@ -9,7 +9,6 @@ export async function GET(req: NextRequest) {
         const { shortCode } = await req.json()
 
         // search in cache
-
         const cachedUrl = await redis.getex(`url:${shortCode}`)
         if (cachedUrl) {
             await prisma.url.update({
