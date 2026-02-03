@@ -1,4 +1,4 @@
-import express, { type Request, type Response } from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors"
 import jwt from "jsonwebtoken"
 import { user, type ResponseType, type User } from "./types/zod.js";
@@ -7,10 +7,11 @@ const JWT_PASSWORD = "sE3rEt";
 const authRouter = express.Router();
 const categoryRouter = express.Router();
 const expenseRouter = express.Router()
-
+import cookieParser from 'cookie-parser';
 const app = express();
 app.use(express.json());
 app.use(cors())
+app.use(cookieParser());
 const PORT = 4000;
 
 authRouter.post("/auth/register", async (req: Request, res: Response) => {
@@ -66,7 +67,7 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
                 statusCode: 401,
             } as ResponseType)
         }
-
+        // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Iml6aGFyMUBnbWFpbC5jb20iLCJpZCI6ImNtbDZjczN3djAwMDB5Mnp2MHNueWp5cDMiLCJpYXQiOjE3NzAxMDgzMTQsImV4cCI6MTc3MDExMTkxNH0.5zR84C2_sYAvoO_uzpT3mkWkaWqqc8_Gb2B2MZpD4N0
         const token = jwt.sign({ email: user.email, id: user.id }, JWT_PASSWORD, { expiresIn: 60 * 60 });
         return res.status(200).json({
             success: true,
@@ -81,14 +82,82 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
     }
 })
 
+function verifyToken(req: Request, res: Response, next: NextFunction) {
+    const token = req.cookies.jwt as string;
+    if (!token) return res.status(401).json({ message: 'Access denied' });
+    jwt.verify(token, JWT_PASSWORD, (err, decoded) => {
+        if (err) return res.status(403).json({ message: "Invalid token" });
+        req.user = decoded;
+        next()
+    })
+}
 
-categoryRouter.get("/categories", (req: Request, res: Response) => { })
-categoryRouter.post("/categories", (req: Request, res: Response) => { })
+categoryRouter.get("/categories", verifyToken, (req: Request, res: Response) => { })
+categoryRouter.post("/categories", verifyToken, (req: Request, res: Response) => { })
 
-expenseRouter.get("/expenses", (req: Request, res: Response) => { })
-expenseRouter.post("/expenses", (req: Request, res: Response) => { })
-expenseRouter.put("/expenses/:id", (req: Request, res: Response) => { })
-expenseRouter.delete("/expenses/:id", (req: Request, res: Response) => { })
+expenseRouter.get("/expenses", verifyToken, async (req: Request, res: Response) => {
+    try {
+        const expenses = await prisma.expense.findMany(
+            {
+                where: {
+                    user:
+                    {
+                        id: "",
+                        email: ""
+                    }
+                },
+                select:
+                    { amount, category, descrption, createdAt }
+            });
+
+        return res.status(200).json({
+            success: true,
+            result: expenses
+        })
+    } catch (error) {
+        return res.json({
+            error: "SystemError",
+            message: "Internal Server Error",
+            statusCode: 500
+        } as ResponseType)
+    }
+})
+
+expenseRouter.post("/expenses", verifyToken, (req: Request, res: Response) => {
+    try {
+
+    } catch (error) {
+        return res.json({
+            error: "SystemError",
+            message: "Internal Server Error",
+            statusCode: 500
+        } as ResponseType)
+    }
+})
+
+expenseRouter.put("/expenses/:id", verifyToken, (req: Request, res: Response) => {
+    try {
+
+    } catch (error) {
+        return res.json({
+            error: "SystemError",
+            message: "Internal Server Error",
+            statusCode: 500
+        } as ResponseType)
+    }
+})
+
+expenseRouter.delete("/expenses/:id", verifyToken, (req: Request, res: Response) => {
+    try {
+
+    } catch (error) {
+        return res.json({
+            error: "SystemError",
+            message: "Internal Server Error",
+            statusCode: 500
+        } as ResponseType)
+    }
+})
 
 app.get("/health", (req, res) => {
     res.status(200).json({ status: "ok" })
