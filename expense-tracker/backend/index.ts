@@ -8,6 +8,8 @@ const authRouter = express.Router();
 const categoryRouter = express.Router();
 const expenseRouter = express.Router()
 import cookieParser from 'cookie-parser';
+import type { Prisma } from "./generated/prisma/client.js";
+import { success } from "zod";
 const app = express();
 app.use(express.json());
 app.use(cors())
@@ -123,9 +125,17 @@ expenseRouter.get("/expenses", verifyToken, async (req: Request, res: Response) 
     }
 })
 
-expenseRouter.post("/expenses", verifyToken, (req: Request, res: Response) => {
+expenseRouter.post("/expenses", verifyToken, async (req: Request, res: Response) => {
+    const { amount, category, descrption } = req.body as Prisma.ExpenseCreateInput;
+    if (!amount || !category || !descrption) return res.status(401).json({});
     try {
-
+        const expense = await prisma.expense.create({
+            data: { amount, category, descrption, userId: "" }
+        })
+        return res.status(201).json({
+            success: true,
+            message: "Expense created successfully"
+        })
     } catch (error) {
         return res.json({
             error: "SystemError",
@@ -136,6 +146,8 @@ expenseRouter.post("/expenses", verifyToken, (req: Request, res: Response) => {
 })
 
 expenseRouter.put("/expenses/:id", verifyToken, (req: Request, res: Response) => {
+    const { id } = req.params;
+
     try {
 
     } catch (error) {
@@ -147,9 +159,15 @@ expenseRouter.put("/expenses/:id", verifyToken, (req: Request, res: Response) =>
     }
 })
 
-expenseRouter.delete("/expenses/:id", verifyToken, (req: Request, res: Response) => {
+expenseRouter.delete("/expenses/:id", verifyToken, async (req: Request, res: Response) => {
+    const { id } = req.params;
+    if (!id) return res.status(401).json({})
     try {
-
+        await prisma.expense.delete({ where: { id: "" } })
+        return res.status(200).json({
+            success: true,
+            message: "Expense deleted successfully"
+        })
     } catch (error) {
         return res.json({
             error: "SystemError",
