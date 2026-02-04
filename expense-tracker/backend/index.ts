@@ -88,18 +88,27 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
         })
     }
 })
+interface JwtUserPayload {
+    id: string,
+    email: string
+}
 
 function verifyToken(req: Request, res: Response, next: NextFunction) {
     const token = req.cookies.jwt as string;
     if (!token) return res.status(401).json({ message: 'Access denied' });
-    jwt.verify(token, JWT_PASSWORD, (err, decoded) => {
-        if (err) return res.status(403).json({ message: "Invalid token" });
-        req.user = decoded;
-        next()
-    })
+    try {
+        const decoded = jwt.verify(token, JWT_PASSWORD) as JwtUserPayload
+        req.user = {
+            id: decoded.id,
+            email: decoded.email
+        }
+    } catch (error) {
+        return res.status(403).json({ message: "Invalid token" })
+    }
 }
 
 categoryRouter.get("/categories", verifyToken, async (req: Request, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: "unauthorized" })
     const userId = req.user.id;
     try {
         const categories = await prisma.category.findMany({ where: { userId } })
@@ -113,10 +122,12 @@ categoryRouter.get("/categories", verifyToken, async (req: Request, res: Respons
     }
 })
 categoryRouter.post("/categories", verifyToken, async (req: Request, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: "unauthorized" })
+
     const { name } = req.body;
     if (!name) return res.status(401).json({ message: "Name is required" })
     try {
-        const categories = await prisma.category.create({ data: { name, userId } })
+        const categories = await prisma.category.create({ data: { name, userId: req.user.id } })
         return res.status(200).json(categories)
     } catch (error) {
         return res.json({
@@ -129,6 +140,8 @@ categoryRouter.post("/categories", verifyToken, async (req: Request, res: Respon
 
 
 expenseRouter.get("/expenses", verifyToken, async (req: Request, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: "unauthorized" })
+
     try {
         const expenses = await prisma.expense.findMany(
             {
@@ -153,11 +166,13 @@ expenseRouter.get("/expenses", verifyToken, async (req: Request, res: Response) 
 })
 
 expenseRouter.post("/expenses", verifyToken, async (req: Request, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: "unauthorized" })
+
     const { amount, categoryId, description } = req.body;
     if (!amount || !categoryId || !description) return res.status(401).json({});
     try {
         const expense = await prisma.expense.create({
-            data: { amount, categoryId, description, userId: req.user.id }
+            data: { amount, categoryId, description, userId: req.user.id, date: new Date() }
         })
         return res.status(201).json({
             success: true,
@@ -187,10 +202,12 @@ expenseRouter.put("/expenses/:id", verifyToken, (req: Request, res: Response) =>
 })
 
 expenseRouter.delete("/expenses/:id", verifyToken, async (req: Request, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: "unauthorized" })
     const { id } = req.params;
+
     if (!id) return res.status(401).json({})
     try {
-        await prisma.expense.delete({ where: { id, userId: req.user.id } })
+        await prisma.expense.delete({ where: { id: id as string, userId: req.user.id } })
         return res.status(200).json({
             success: true,
             message: "Expense deleted successfully"
