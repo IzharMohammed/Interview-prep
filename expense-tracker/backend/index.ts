@@ -8,11 +8,11 @@ const authRouter = express.Router();
 const categoryRouter = express.Router();
 const expenseRouter = express.Router()
 import cookieParser from 'cookie-parser';
-import type { Prisma } from "./generated/prisma/client.js";
-import { success } from "zod";
 const app = express();
 app.use(express.json());
-app.use(cors())
+app.use(cors(
+    { credentials: true }
+))
 app.use(cookieParser());
 const PORT = 4000;
 
@@ -58,6 +58,34 @@ authRouter.post("/auth/register", async (req: Request, res: Response) => {
         })
     }
 })
+
+/**
+ in /login, adding this line return res.status(200).cookie("jwt", token, { httpOnly: true }) will automatically set the cookie in browser automatically
+ FE does not manually store it
+ cookie:- 
+- Automatically sent  cookie to server on every request
+
+In backend:-
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true
+}));
+
+in frontend:-
+fetch("/auth/login", {
+  method: "POST",
+  credentials: "include",
+  body: JSON.stringify(data)
+});
+
+What is sameSite?
+sameSite tells the browser WHEN it is allowed to send a cookie.
+
+In simple words:
+“Should this cookie be sent when the request comes from another site?”
+This protects you from CSRF attacks.
+
+ */
 authRouter.post("/auth/login", async (req: Request, res: Response) => {
     const { email, password } = req.body as User
     const result = user.safeParse({ email, password });
@@ -79,7 +107,7 @@ authRouter.post("/auth/login", async (req: Request, res: Response) => {
         }
         // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Iml6aGFyMUBnbWFpbC5jb20iLCJpZCI6ImNtbDZjczN3djAwMDB5Mnp2MHNueWp5cDMiLCJpYXQiOjE3NzAxMDgzMTQsImV4cCI6MTc3MDExMTkxNH0.5zR84C2_sYAvoO_uzpT3mkWkaWqqc8_Gb2B2MZpD4N0
         const token = jwt.sign({ email: user.email, id: user.id }, JWT_PASSWORD, { expiresIn: 60 * 60 });
-        return res.status(200).cookie("jwt", token, { httpOnly: true })
+        return res.status(200).cookie("jwt", token, { httpOnly: true, sameSite: "strict" })
     } catch (error) {
         return res.json({
             error: "SystemError",
